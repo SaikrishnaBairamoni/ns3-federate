@@ -32,12 +32,10 @@ jobs:
       - name: Build with build-wrapper
         run: |
           chmod +x docker/*.sh run.sh run_from_mosaic.sh run_manually.sh
-          build-wrapper-linux-x86-64 --out-dir bw-output ./docker/install_dependencies.sh
+          sudo -E build-wrapper-linux-x86-64 --out-dir bw-output ./docker/install_dependencies.sh
+          sudo chown -R "$USER:$USER" bw-output
 
       - name: SonarScanner
         uses: SonarSource/sonarqube-scan-action@v7.1.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        with:
-          args: >
-            -Dsonar.cfamily.compile-commands=bw-output/compile_commands.json
