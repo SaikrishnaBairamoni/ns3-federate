@@ -1,0 +1,43 @@
+name: CI
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - develop
+      - master
+      - "release/*"
+
+jobs:
+  sonar:
+    runs-on: ubuntu-22.04
+    env:
+      NS3_FLAVOR: v2x
+      NS3_VERSION: "3.42"
+      V2X_NS3_VERSION: "3.42"
+      V2X_NS3_REF: ns-3-dev-v2x-v1.1
+      V2X_NR_REF: v2x-1.1
+      LEGACY_NS3_VERSION: "3.38"
+      LEGACY_NR_BRANCH: 5g-lena-v2.4.y
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install build-wrapper
+        uses: SonarSource/sonarqube-scan-action/install-build-wrapper@v7.1.0
+
+      - name: Build with build-wrapper
+        run: |
+          chmod +x docker/*.sh run.sh run_from_mosaic.sh run_manually.sh
+          build-wrapper-linux-x86-64 --out-dir bw-output ./docker/install_dependencies.sh
+
+      - name: SonarScanner
+        uses: SonarSource/sonarqube-scan-action@v7.1.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.cfamily.compile-commands=bw-output/compile_commands.json
